@@ -302,6 +302,14 @@ func (v *View) Clear() {
 	v.clearRunes()
 }
 
+func (v *View) DirtyClear() {
+	v.tainted = true
+	v.lines = nil
+	v.SetCursor(0, 0)
+	v.SetOrigin(0, 0)
+	// v.clearRunes()
+}
+
 // clearRunes erases all the cells in the view.
 func (v *View) clearRunes() {
 	maxX, maxY := v.Size()
