@@ -356,6 +356,43 @@ func (v *View) writeRune(x, y int, ch rune) error {
 	return nil
 }
 
+// writeRune writes a rune into the view's internal buffer, at the
+// position corresponding to the point (x, y). The length of the internal
+// buffer is increased if the point is out of bounds. Overwrite mode is
+// governed by the value of View.overwrite.
+func (v *View) WriteUnderlinedRune(x, y int, ch rune) error {
+	v.tainted = true
+
+	x, y, err := v.realPosition(x, y)
+	if err != nil {
+		return err
+	}
+
+	if x < 0 || y < 0 {
+		return errors.New("invalid point")
+	}
+
+	if y >= len(v.lines) {
+		s := make([][]rune, y-len(v.lines)+1)
+		v.lines = append(v.lines, s...)
+	}
+
+	olen := len(v.lines[y])
+	if x >= len(v.lines[y]) {
+		s := make([]rune, x-len(v.lines[y])+1)
+		v.lines[y] = append(v.lines[y], s...)
+	}
+
+	if !v.Overwrite && x < olen {
+		v.lines[y] = append(v.lines[y], '\x00')
+		copy(v.lines[y][x+1:], v.lines[y][x:])
+	}
+	// v.lines[y][x] = ch
+	termbox.SetCell(x, y, ch, termbox.AttrUnderline, termbox.AttrUnderline)
+	return nil
+}
+
+
 // deleteRune removes a rune from the view's internal buffer, at the
 // position corresponding to the point (x, y).
 func (v *View) deleteRune(x, y int) error {
